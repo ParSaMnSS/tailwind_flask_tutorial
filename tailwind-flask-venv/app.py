@@ -15,5 +15,9 @@ def login():
 def aboutus():
     return render_template('aboutus.html')
 
+@app.route('/hi')
+def hi():
+    return 'hi'
+
 if __name__ == '__main__':
     app.run(debug=True)
