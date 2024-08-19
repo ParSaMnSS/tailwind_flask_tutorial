@@ -96,6 +96,10 @@ def protected():
     current_user = get_jwt_identity()
     return render_template('protected.html', user=current_user)
 
+@app.route('/aboutus')
+def aboutus():
+    return render_template ('aboutus.html')
+
 @app.route('/logout')
 def logout():
     session.clear()
