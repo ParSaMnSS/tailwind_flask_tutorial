@@ -11,7 +11,6 @@ import os
 
 app = Flask(__name__)
 
-# Environment Variables
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(16).hex()
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or os.urandom(16).hex()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
