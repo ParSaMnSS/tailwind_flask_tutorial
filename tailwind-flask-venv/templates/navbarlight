@@ -8,7 +8,7 @@
 </head>
 <body>
     <div>
-        <header class="{% block navbar_classes %}absolute inset-x-0 top-0 z-50{% endblock %} absolute inset-x-0 top-0 z-50 bg-white text-white">
+        <header class="{% block navbar_classes %}absolute inset-x-0 top-0 z-50{% endblock %} absolute inset-x-0 top-0 z-50 bg-gray-200 text-white">
             <nav class="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
               <div class="flex lg:flex-1">
                 <a href="{{url_for('index')}}" class="-m-1.5 p-1.5">
@@ -24,14 +24,14 @@
                   </svg>
                 </button>
               </div>
-              <div class="hidden lg:flex lg:gap-x-12 tewhi text-gray-700">
+              <div class="hidden lg:flex lg:gap-x-12 tewhi">
                 <a href="home" class="text-sm font-semibold leading-6 ">Product</a>
                 <!-- <a href="#" class="text-sm font-semibold leading-6 ">Features</a> -->
                 <!-- <a href="#" class="text-sm font-semibold leading-6 ">Marketplace</a> -->
                 <a href="aboutus" class="text-sm font-semibold leading-6 ">About Us</a>
               </div>
               <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-                <a href="{{url_for('login')}}" class="text-sm font-semibold leading-6 text-gray-700">Log in <span aria-hidden="true">&rarr;</span></a>
+                <a href="{{url_for('login')}}" class="text-sm font-semibold leading-6">Log in <span aria-hidden="true">&rarr;</span></a>
               </div>
             </nav>
             <!-- Mobile menu, show/hide based on menu open state. -->

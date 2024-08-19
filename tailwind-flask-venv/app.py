@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
+import logging
 import os
 
 app = Flask(__name__)
@@ -61,12 +62,16 @@ def register():
         if User.query.filter_by(email=email).first():
             flash('User already registered')
         else:
-            passhash = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16)
-            new_user = User(email=email, password=passhash)
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Registered successfully')
-            return redirect(url_for('home'))
+            try:
+                passhash = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16)
+                new_user = User(email=email, password=passhash)
+                db.session.add(new_user)
+                db.session.commit()
+                flash('Registered successfully')
+                return redirect(url_for('home'))
+            except Exception as e:
+                logging.error(f"Error registering user: {e}")
+                flash('Failed to register user')
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -82,7 +87,7 @@ def login():
                 access_token = create_access_token(identity=user.id)
                 session['access_token'] = access_token
                 login_user(user)
-                return redirect(url_for('home'))  # This line is supposed to redirect to 'home.html'
+                return redirect(url_for('home'))  
             else:
                 flash('Invalid email or password')
         except Exception as e:
@@ -107,6 +112,10 @@ def logout():
 @app.route('/home')
 def home():
     return render_template('home.html')
+
+@app.route('/product')
+def product():
+    return render_template('product.html')
 
 @app.errorhandler(404)
 def page_not_found(e):
