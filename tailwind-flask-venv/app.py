@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, flash, jsonify, session
+from flask import Flask, render_template, request, redirect, flash, jsonify, session, url_for
+from flask_login import LoginManager, UserMixin, login_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Email
@@ -9,20 +10,25 @@ from flask_session import Session
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(16).hex()
-app.config['JWT_SECRET_KEY'] = os.urandom(16).hex()
+
+# Environment Variables
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(16).hex()
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or os.urandom(16).hex()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_TYPE'] = 'filesystem'
+
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 Session(app)
 
+# Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
+# Forms
 class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -37,12 +43,12 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+# Utility Functions
 @app.before_request
-def create_tables():
-    if not hasattr(app, 'tables_created'):
-        db.create_all()
-        app.tables_created = True
+def init_db():
+    db.create_all()
 
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -51,10 +57,9 @@ def index():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        email = form.email.data # extracts the data and assigns it to 'email'
-        password = form.password.data #same but for password
-
-        if User.query.filter_by(email=email).first():  #to check if the email adress already exists
+        email = form.email.data
+        password = form.password.data
+        if User.query.filter_by(email=email).first():
             flash('User already registered')
         else:
             passhash = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16)
@@ -62,26 +67,27 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             flash('Registered successfully')
-            return redirect('/home')
-
+            return redirect(url_for('home'))
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
+    form = LoginForm(request.form)
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
 
-        user = User.query.filter_by(email=email).first()
-
-        if user and check_password_hash(user.password, password):
-            access_token = create_access_token(identity=user.id)
-            session['access_token'] = access_token
-            return redirect('/home')
-        else:
-            flash('Invalid email or password')
-
+        try:
+            user = User.query.filter_by(email=email).first()
+            if user and check_password_hash(user.password, password):
+                access_token = create_access_token(identity=user.id)
+                session['access_token'] = access_token
+                login_user(user)
+                return redirect(url_for('home'))  # This line is supposed to redirect to 'home.html'
+            else:
+                flash('Invalid email or password')
+        except Exception as e:
+            flash(f'An error occurred: {str(e)}')
     return render_template('login.html', form=form)
 
 @app.route('/protected', methods=['GET'])
@@ -92,8 +98,8 @@ def protected():
 
 @app.route('/logout')
 def logout():
-    session.pop('access_token', None)
-    return redirect('/login')
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/home')
 def home():
